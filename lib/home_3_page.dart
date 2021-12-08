@@ -69,64 +69,177 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
 
   bool loader = false;
 
-  // int seconds = 2;
-
   @override
   void initState() {
     timerStream = StreamController<bool>();
 
     swiperController.stopAutoplay();
 
-    var futures = <Future<File>>[];
-    for (var item in sliderItems) {
-      futures.add(_downloadFile(
-          filename:
-              '${item.name}sep${item.id}sep${DateTime.now()}sep${item.sliderType}sep.${item.link.split(".")[item.link.split(".").length - 1]}',
-          url: item.link));
-    }
-    setState(() {
-      loader = true;
-    });
-    Future.wait(futures).then((List<File> allFiles) {
-      print("File from Future -=> ${allFiles.length}");
+    getApplicationDocumentsDirectory().then((Directory dir) async {
+      bool dirIsExist = await Directory("${dir.path}/slider_items").exists();
 
-      setState(() {
-        loader = false;
-      });
+      if (dirIsExist) {
+        print("FILE IS EXIST -------------------- ");
+        List<FileSystemEntity> dirContent =
+            await dirContents(Directory("${dir.path}/slider_items"));
+        print("All files in dir -=-=> ${dirContent.length}");
 
-      for (var sliderFile in allFiles) {
-        if (sliderFile.path.split("sep")[3] == 'image') {
-          sliderFiles.add(sliderFile);
+        if (dirContent.length == sliderItems.length) {
+          print("FILES NO DOWNLOADED");
+          setState(() {
+            loader = true;
+          });
+
+          setState(() {
+            loader = false;
+          });
+
+          for (var sliderFile in dirContent) {
+            if (sliderFile.path.split("sep")[3] == 'image') {
+              sliderFiles.add(sliderFile);
+            } else {
+              late VideoPlayerController _controller;
+              late Future<void> _initializeVideoPlayerFuture;
+              _controller = VideoPlayerController.file(
+                File(sliderFile.path),
+              );
+
+              _initializeVideoPlayerFuture = _controller.initialize();
+
+              sliderFiles.add({
+                "controller": _controller,
+                "player": _initializeVideoPlayerFuture
+              });
+              
+            }
+          }
+
+          // sliderFiles.addAll(value);
+          setState(() {});
+
+          for (var element in sliderFiles) {
+            print("File Path [+]-> " + element.path);
+          }
         } else {
-          late VideoPlayerController _controller;
-          late Future<void> _initializeVideoPlayerFuture;
-          _controller = VideoPlayerController.file(
-            sliderFile,
-          );
+          print("FILES  DOWNLOADED");
+          var futures = <Future<File>>[];
+          for (var item in sliderItems) {
+            futures.add(_downloadFile(
+                filename:
+                    '${item.name}sep${item.id}sep${DateTime.now()}sep${item.sliderType}sep.${item.link.split(".")[item.link.split(".").length - 1]}',
+                url: item.link));
+          }
+          setState(() {
+            loader = true;
+          });
 
-          _initializeVideoPlayerFuture = _controller.initialize();
+          Future.wait(futures).then((List<File> allFiles) {
+            print("File from Future -=> ${allFiles.length}");
 
-          sliderFiles.add({
-            "controller": _controller,
-            "player": _initializeVideoPlayerFuture
+            setState(() {
+              loader = false;
+            });
+
+            for (var sliderFile in allFiles) {
+              if (sliderFile.path.split("sep")[3] == 'image') {
+                sliderFiles.add(sliderFile);
+              } else {
+                late VideoPlayerController _controller;
+                late Future<void> _initializeVideoPlayerFuture;
+                _controller = VideoPlayerController.file(
+                  sliderFile,
+                );
+
+                _initializeVideoPlayerFuture = _controller.initialize();
+
+                sliderFiles.add({
+                  "controller": _controller,
+                  "player": _initializeVideoPlayerFuture
+                });
+              }
+            }
+
+            // sliderFiles.addAll(value);
+            setState(() {});
+
+            for (var element in sliderFiles) {
+              print("File Path [+]-> " + element.path);
+            }
+          }).catchError((err) {
+            setState(() {
+              loader = false;
+            });
+            print("error -=-> $err");
           });
         }
-      }
+      } else {
+        print("FILE NOT EXIST -------------------- ");
+        print("FILES  DOWNLOADED");
+        var futures = <Future<File>>[];
+        for (var item in sliderItems) {
+          futures.add(_downloadFile(
+              filename:
+                  '${item.name}sep${item.id}sep${DateTime.now()}sep${item.sliderType}sep.${item.link.split(".")[item.link.split(".").length - 1]}',
+              url: item.link));
+        }
+        setState(() {
+          loader = true;
+        });
 
-      // sliderFiles.addAll(value);
-      setState(() {});
+        Future.wait(futures).then((List<File> allFiles) {
+          print("File from Future -=> ${allFiles.length}");
 
-      for (var element in sliderFiles) {
-        print("File Path [+]-> " + element.path);
+          setState(() {
+            loader = false;
+          });
+
+          for (var sliderFile in allFiles) {
+            if (sliderFile.path.split("sep")[3] == 'image') {
+              sliderFiles.add(sliderFile);
+            } else {
+              late VideoPlayerController _controller;
+              late Future<void> _initializeVideoPlayerFuture;
+              _controller = VideoPlayerController.file(
+                sliderFile,
+              );
+
+              _initializeVideoPlayerFuture = _controller.initialize();
+
+              sliderFiles.add({
+                "controller": _controller,
+                "player": _initializeVideoPlayerFuture
+              });
+            }
+          }
+
+          // sliderFiles.addAll(value);
+          setState(() {});
+
+          for (var element in sliderFiles) {
+            print("File Path [+]-> " + element.path);
+          }
+        }).catchError((err) {
+          setState(() {
+            loader = false;
+          });
+          print("error -=-> $err");
+        });
       }
-    }).catchError((err) {
-      setState(() {
-        loader = false;
-      });
-      print("error -=-> $err");
     });
 
     super.initState();
+  }
+
+
+
+  Future<List<FileSystemEntity>> dirContents(Directory dir) {
+    var files = <FileSystemEntity>[];
+    var completer = Completer<List<FileSystemEntity>>();
+    var lister = dir.list(recursive: false);
+    lister.listen((file) => files.add(file),
+        // should also register onError
+        onDone: () => completer.complete(files));
+    return completer.future;
   }
 
   @override
@@ -166,9 +279,20 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
     var response = await request.close();
     var bytes = await consolidateHttpClientResponseBytes(response);
     String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = File('$dir/$filename');
-    await file.writeAsBytes(bytes);
-    return file;
+
+    bool isExist = await Directory("$dir/slider_items").exists();
+
+    if (isExist) {
+      String sliderDirPath = Directory("$dir/slider_items").path;
+      File file = File('$sliderDirPath/$filename');
+      await file.writeAsBytes(bytes);
+      return file;
+    } else {
+      Directory sliderDir = await Directory("$dir/slider_items").create();
+      File file = File('${sliderDir.path}/$filename');
+      await file.writeAsBytes(bytes);
+      return file;
+    }
   }
 
   SwiperController swiperController = SwiperController();

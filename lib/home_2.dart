@@ -9,14 +9,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+class Home2Screen extends StatefulWidget {
+  const Home2Screen({Key? key}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _Home2ScreenState createState() => _Home2ScreenState();
 }
 
-class _HomePageState extends State<HomePage> with AfterLayoutMixin {
+class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
   late StreamController<bool> timerStream;
 
   @override
@@ -77,54 +77,77 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
 
     swiperController.stopAutoplay();
 
-    var futures = <Future<File>>[];
     for (var item in sliderItems) {
-      futures.add(_downloadFile(
-          filename:
-              '${item.name}sep${item.id}sep${DateTime.now()}sep${item.sliderType}sep.${item.link.split(".")[item.link.split(".").length - 1]}',
-          url: item.link));
+      if (item.sliderType == "image") {
+        sliderFiles.add(item.link);
+        setState(() {});
+      } else {
+        late VideoPlayerController _controller;
+        late Future<void> _initializeVideoPlayerFuture;
+        _controller = VideoPlayerController.network(
+          item.link,
+        );
+
+        _initializeVideoPlayerFuture = _controller.initialize();
+
+        sliderFiles.add({
+          "controller": _controller,
+          "player": _initializeVideoPlayerFuture
+        });
+        sliderFiles.add(item.link);
+        setState(() {});
+      }
     }
-    setState(() {
-      loader = true;
-    });
-    Future.wait(futures).then((List<File> allFiles) {
-      print("File from Future -=> ${allFiles.length}");
 
-      setState(() {
-        loader = false;
-      });
+    // var futures = <Future<File>>[];
+    // for (var item in sliderItems) {
+    //   futures.add(_downloadFile(
+    //       filename:
+    //           '${item.name}sep${item.id}sep${DateTime.now()}sep${item.sliderType}sep.${item.link.split(".")[item.link.split(".").length - 1]}',
+    //       url: item.link));
+    // }
+    // setState(() {
+    //   loader = true;
+    // });
 
-      for (var sliderFile in allFiles) {
-        if (sliderFile.path.split("sep")[3] == 'image') {
-          sliderFiles.add(sliderFile);
-        } else {
-          late VideoPlayerController _controller;
-          late Future<void> _initializeVideoPlayerFuture;
-          _controller = VideoPlayerController.file(
-            sliderFile,
-          );
+    // Future.wait(futures).then((List<File> allFiles) {
+    //   print("File from Future -=> ${allFiles.length}");
 
-          _initializeVideoPlayerFuture = _controller.initialize();
+    //   setState(() {
+    //     loader = false;
+    //   });
 
-          sliderFiles.add({
-            "controller": _controller,
-            "player": _initializeVideoPlayerFuture
-          });
-        }
-      }
+    //   for (var sliderFile in allFiles) {
+    //     if (sliderFile.path.split("sep")[3] == 'image') {
+    //       sliderFiles.add(sliderFile);
+    //     } else {
+    //       late VideoPlayerController _controller;
+    //       late Future<void> _initializeVideoPlayerFuture;
+    //       _controller = VideoPlayerController.file(
+    //         sliderFile,
+    //       );
 
-      // sliderFiles.addAll(value);
-      setState(() {});
+    //       _initializeVideoPlayerFuture = _controller.initialize();
 
-      for (var element in sliderFiles) {
-        print("File Path [+]-> " + element.path);
-      }
-    }).catchError((err) {
-      setState(() {
-        loader = false;
-      });
-      print("error -=-> $err");
-    });
+    //       sliderFiles.add({
+    //         "controller": _controller,
+    //         "player": _initializeVideoPlayerFuture
+    //       });
+    //     }
+    //   }
+
+    //   // sliderFiles.addAll(value);
+    //   setState(() {});
+
+    //   for (var element in sliderFiles) {
+    //     print("File Path [+]-> " + element.path);
+    //   }
+    // }).catchError((err) {
+    //   setState(() {
+    //     loader = false;
+    //   });
+    //   print("error -=-> $err");
+    // });
 
     super.initState();
   }
@@ -132,44 +155,44 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
   @override
   void dispose() {
     // Ensure disposing of the VideoPlayerController to free up resources.
-    for (var element in sliderFiles) {
-      if (element is File) {
-      } else {
-        (element['controller'] as VideoPlayerController).dispose();
-      }
-    }
+    // for (var element in sliderFiles) {
+    //   if (element is File) {
+    //   } else {
+    //     (element['controller'] as VideoPlayerController).dispose();
+    //   }
+    // }
 
     super.dispose();
   }
 
-  Future<String> get sliderItemsDir async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
-  }
+  // Future<String> get sliderItemsDir async {
+  //   final directory = await getApplicationDocumentsDirectory();
+  //   return directory.path;
+  // }
 
-  Future<File> get _localFile async {
-    final path = await sliderItemsDir;
-    return File('$path/counter.txt');
-  }
+  // Future<File> get _localFile async {
+  //   final path = await sliderItemsDir;
+  //   return File('$path/counter.txt');
+  // }
 
-  Future<File> writeCounter(int counter) async {
-    final file = await _localFile;
+  // Future<File> writeCounter(int counter) async {
+  //   final file = await _localFile;
 
-    // Write the file
-    return file.writeAsString('$counter');
-  }
+  //   // Write the file
+  //   return file.writeAsString('$counter');
+  // }
 
-  static var httpClient = HttpClient();
-  Future<File> _downloadFile(
-      {required String url, required String filename}) async {
-    var request = await httpClient.getUrl(Uri.parse(url));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
-    String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = File('$dir/$filename');
-    await file.writeAsBytes(bytes);
-    return file;
-  }
+  // static var httpClient = HttpClient();
+  // Future<File> _downloadFile(
+  //     {required String url, required String filename}) async {
+  //   var request = await httpClient.getUrl(Uri.parse(url));
+  //   var response = await request.close();
+  //   var bytes = await consolidateHttpClientResponseBytes(response);
+  //   String dir = (await getApplicationDocumentsDirectory()).path;
+  //   File file = File('$dir/$filename');
+  //   await file.writeAsBytes(bytes);
+  //   return file;
+  // }
 
   SwiperController swiperController = SwiperController();
 
@@ -193,8 +216,8 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
                 autoplay: true,
                 loop: true,
                 itemBuilder: (BuildContext context, int index) {
-                  if (sliderFiles[index] is File) {
-                    return Image.file(sliderFiles[index]);
+                  if (sliderFiles[index] is String) {
+                    return Image.network(sliderFiles[index]);
                   } else {
                     return FutureBuilder(
                       future: sliderFiles[index]["player"],
@@ -233,7 +256,7 @@ class _HomePageState extends State<HomePage> with AfterLayoutMixin {
                 itemCount: sliderFiles.length,
                 onIndexChanged: (index) async {
                   print("NEW PAGE ---------- $index");
-                  if (sliderFiles[index] is File) {
+                  if (sliderFiles[index] is String) {
                     timerStream.add(true);
                   } else {
                     timerStream.add(false);
