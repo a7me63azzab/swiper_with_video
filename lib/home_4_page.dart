@@ -5,19 +5,20 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-class Home2Screen extends StatefulWidget {
-  const Home2Screen({Key? key}) : super(key: key);
+class Home4Screen extends StatefulWidget {
+  const Home4Screen({Key? key}) : super(key: key);
 
   @override
-  _Home2ScreenState createState() => _Home2ScreenState();
+  _Home4ScreenState createState() => _Home4ScreenState();
 }
 
-class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
+class _Home4ScreenState extends State<Home4Screen> with AfterLayoutMixin {
   late StreamController<bool> timerStream;
 
   @override
@@ -83,9 +84,7 @@ class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
         id: 1,
         name: "image1",
         link:
-            "https://i.imgur.com/ot9CaXv.png",
-        // link:
-        //     "https://scope-way.com/scope_way/public/storage/uploads/16380364632832.jpg",
+            "https://scope-way.com/scope_way/public/storage/uploads/16380364632832.jpg",
         sliderType: "image",
         wait: const Duration(seconds: 1)),
     SliderItem(
@@ -167,7 +166,23 @@ class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
   void initState() {
     timerStream = StreamController<bool>();
 
-    swiperController.stopAutoplay();
+    // swiperController.stopAutoplay();
+
+//     for (var item in sliderItems) {
+//       // Stream<FileResponse> fileStream =
+//       //     DefaultCacheManager().getFileStream(item.link,key: item.name, withProgress: true);
+
+//       Future<FileInfo> downloadedInfo =
+//           DefaultCacheManager().downloadFile(item.link,key: item.name,);
+// // DefaultCacheManager().
+//       // fileStream.first.then((value) {
+//       //   print("File from the stream =--> ${value.originalUrl}");
+//       // });
+
+//       downloadedInfo.then((value) {
+//         print("File from the stream =--> ${value.file.path}");
+//       });
+//     }
 
     for (var item in sliderItems) {
       if (item.sliderType == "image") {
@@ -186,10 +201,18 @@ class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
           "controller": _controller,
           "player": _initializeVideoPlayerFuture
         });
-        // sliderFiles.add(item.link);
+        sliderFiles.add(item.link);
         setState(() {});
       }
     }
+
+    //    Stream<FileResponse> fileStream;
+
+    // void _downloadFile() {
+    //   setState(() {
+    //     fileStream = DefaultCacheManager().getFileStream(url, withProgress: true);
+    //   });
+    // }
 
     // var futures = <Future<File>>[];
     // for (var item in sliderItems) {
@@ -302,173 +325,119 @@ class _Home2ScreenState extends State<Home2Screen> with AfterLayoutMixin {
               ),
             )
           : IgnorePointer(
-              ignoring: false,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: 200,
-                child: Swiper(
-                  controller: swiperController,
-                  autoplay: true,
-                  loop: true,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (sliderFiles[index] is String) {
-                      return Image.network(
-                        sliderFiles[index],
-                        fit: BoxFit.contain,
-                        // loadingBuilder: (BuildContext context, Widget child,
-                        //     ImageChunkEvent? loadingProgress) {
-                        //   return Center(
-                        //     child: CircularProgressIndicator(
-                        //       value: loadingProgress?.expectedTotalBytes != null
-                        //           ? loadingProgress!.cumulativeBytesLoaded /
-                        //               loadingProgress.expectedTotalBytes!
-                        //           : null,
-                        //     ),
-                        //   );
-                        // },
-                      );
-                    } else {
-                      return FutureBuilder(
-                        future: sliderFiles[index]["player"],
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.done) {
-                            return VisibilityDetector(
-                              key: Key("key_$index"),
-                              onVisibilityChanged: (VisibilityInfo info) {
-                                debugPrint(
-                                    "${info.visibleFraction} of my widget is visible");
-                                if (info.visibleFraction == 0) {
-                                  sliderFiles[index]["controller"].pause();
-                                } else {
-                                  (sliderFiles[index]["controller"]
-                                          as VideoPlayerController)
-                                      .play();
-                                }
-                              },
-                              child: LoaderOverlay(
-                                child: AspectRatio(
-                                  aspectRatio: sliderFiles[index]["controller"]
-                                      .value
-                                      .aspectRatio,
-                                  child: VideoPlayer(
-                                      sliderFiles[index]["controller"]),
-                                ),
+              ignoring: true,
+              child: Swiper(
+                controller: swiperController,
+                autoplay: true,
+                loop: true,
+                itemBuilder: (BuildContext context, int index) {
+                  if (sliderFiles[index] is String) {
+                    return Image.network(sliderFiles[index]);
+                  } else {
+                    return FutureBuilder(
+                      future: sliderFiles[index]["player"],
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          return VisibilityDetector(
+                            key: Key("key_$index"),
+                            onVisibilityChanged: (VisibilityInfo info) {
+                              debugPrint(
+                                  "${info.visibleFraction} of my widget is visible");
+                              if (info.visibleFraction == 0) {
+                                sliderFiles[index]["controller"].pause();
+                              } else {
+                                (sliderFiles[index]["controller"]
+                                        as VideoPlayerController)
+                                    .play();
+                              }
+                            },
+                            child: LoaderOverlay(
+                              child: AspectRatio(
+                                aspectRatio: sliderFiles[index]["controller"]
+                                    .value
+                                    .aspectRatio,
+                                child:
+                                    VideoPlayer(sliderFiles[index]["controller"]),
                               ),
-                            );
-                          } else if ((sliderFiles[index]["controller"]
-                                  as VideoPlayerController)
-                              .value
-                              .isBuffering) {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.red,
-                              ),
-                            );
-                          } else {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.yellow,
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    }
-                  },
-                  itemCount: sliderFiles.length,
-                  onIndexChanged: (index) {
-                    print("NEW PAGE ---------- $index");
-                    if (sliderFiles[index] is String) {
-                      timerStream.add(true);
-                    } else {
-                      timerStream.add(false);
-
-                      (sliderFiles[index]['controller']
-                              as VideoPlayerController)
-                          .addListener(() {
-                        if ((sliderFiles[index]['controller']
-                                    as VideoPlayerController)
-                                .value
-                                .isBuffering ||
-                            (sliderFiles[index]['controller']
-                                    as VideoPlayerController)
-                                .value
-                                .isPlaying) {
-                          print("VIDEP IS BUFFERING OR BUFFERING");
-                          timerStream.add(false);
-                        } else {
-                          timerStream.add(true);
-                        }
-
-                        if ((sliderFiles[index]['controller']
+                            ),
+                          );
+                        } else if ((sliderFiles[index]["controller"]
                                 as VideoPlayerController)
                             .value
                             .isBuffering) {
-                          print("Show Loader");
-                          context.loaderOverlay.show();
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         } else {
-                          print("Close Loader");
-                          context.loaderOverlay.hide();
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
+                      },
+                    );
+                  }
+                },
+                itemCount: sliderFiles.length,
+                onIndexChanged: (index) {
+                  print("NEW PAGE ---------- $index");
+                  if (sliderFiles[index] is String) {
+                    timerStream.add(true);
+                  } else {
+                    // timerStream.add(false);
+
+                    // if ((sliderFiles[index]['controller']
+                    //         as VideoPlayerController)
+                    //     .value
+                    //     .isInitialized) {
+                    //   if ((sliderFiles[index]['controller']
+                    //               as VideoPlayerController)
+                    //           .value
+                    //           .isPlaying ||
+                    //       (sliderFiles[index]['controller']
+                    //               as VideoPlayerController)
+                    //           .value
+                    //           .isBuffering) {
+                    //     timerStream.add(false);
+                    //   } else {
+                    //     timerStream.add(true);
+                    //   }
+                    // }
+
+                    // (sliderFiles[index]['controller'] as VideoPlayerController)
+                    //     .position
+                    //     .whenComplete(() {
+                    //   print("Video Completed ---------");
+                    // });
+
+                    timerStream.add(false);
+                    if ((sliderFiles[index]['controller']
+                            as VideoPlayerController)
+                        .value
+                        .isInitialized) {
+                      // if ((sliderFiles[index]['controller']
+                      //         as VideoPlayerController)
+                      //     .value
+                      //     .isBuffering) {
+                      //   timerStream.add(false);
+                      // }
+
+                      Future.delayed(
+                          (sliderFiles[index]['controller']
+                                  as VideoPlayerController)
+                              .value
+                              .duration, () {
+                        print("Video Complete");
+
+                        timerStream.add(true);
                       });
-
-                      // if ((sliderFiles[index]['controller']
-                      //         as VideoPlayerController)
-                      //     .value
-                      //     .isInitialized) {
-                      //   if ((sliderFiles[index]['controller']
-                      //               as VideoPlayerController)
-                      //           .value
-                      //           .isPlaying ||
-                      //       (sliderFiles[index]['controller']
-                      //               as VideoPlayerController)
-                      //           .value
-                      //           .isBuffering) {
-                      //     timerStream.add(false);
-                      //   } else {
-                      //     timerStream.add(true);
-                      //   }
-                      // }
-
-                      // (sliderFiles[index]['controller'] as VideoPlayerController)
-                      //     .position
-                      //     .whenComplete(() {
-                      //   print("Video Completed ---------");
-                      // });
-
-                      // timerStream.add(false);
-                      // if ((sliderFiles[index]['controller']
-                      //         as VideoPlayerController)
-                      //     .value
-                      //     .isInitialized) {
-                      //   // if ((sliderFiles[index]['controller']
-                      //   //         as VideoPlayerController)
-                      //   //     .value
-                      //   //     .isBuffering) {
-                      //   //   timerStream.add(false);
-                      //   // }
-
-                      //   Future.delayed(
-                      //       (sliderFiles[index]['controller']
-                      //               as VideoPlayerController)
-                      //           .value
-                      //           .duration, () {
-                      //     print("Video Complete");
-
-                      //     timerStream.add(true);
-                      //   });
-                      // }
-
-                      // print("SET NEW TIMER YA PRINCE");
                     }
-                  },
-                  duration: 3,
-                  pagination: const SwiperPagination(
-                    
-                  ),
-                  control: const SwiperControl(),
-                ),
+
+                    // print("SET NEW TIMER YA PRINCE");
+                  }
+                },
+                duration: 3,
+                pagination: const SwiperPagination(),
+                control: const SwiperControl(),
               ),
             ),
     );
