@@ -1,6 +1,4 @@
 import 'package:custom_slider_with_video/home_2.dart';
-import 'package:custom_slider_with_video/home_4_page.dart';
-import 'package:custom_slider_with_video/home_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
